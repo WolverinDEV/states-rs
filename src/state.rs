@@ -1,7 +1,9 @@
-use core::hash::Hash;
-use std::any::{
-    Any,
-    TypeId,
+use core::{
+    any::{
+        Any,
+        TypeId,
+    },
+    hash::Hash,
 };
 
 use crate::registry::StateRegistry;

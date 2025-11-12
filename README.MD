@@ -6,10 +6,13 @@
 [GitHub build status]: https://github.com/WolverinDEV/states-rs/workflows/Rust/badge.svg?branch=master
 [actions]: https://github.com/WolverinDEV/states-rs/actions?query=workflow%3ARust
 
-A lightweight, type-safe registry for managing cached and self-initializing states.
+A lightweight, type-safe registry for managing cached and self-initializing.
 
 `states` lets you define reusable, parameterized objects that can be lazily created,
 cached, and invalidated — ideal for dependency-aware systems or runtime caching.
+
+> Note:  
+> The crate is `no_std` compatible by default and does not use the standard library.  
 
 ## Example
 

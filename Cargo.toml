@@ -5,5 +5,8 @@ license-file = "LICENSE"
 description = "A lightweight, type-safe registry for managing cached and self-initializing states."
 
 name = "states"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+
+[dependencies]
+hashbrown = "0.16.0"

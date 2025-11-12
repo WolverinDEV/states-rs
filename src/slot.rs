@@ -1,4 +1,9 @@
-use std::collections::{
+use alloc::{
+    boxed::Box,
+    vec::Vec,
+};
+
+use hashbrown::{
     hash_map::Entry,
     HashMap,
 };

@@ -1,20 +1,21 @@
+use alloc::{
+    boxed::Box,
+    vec::Vec,
+};
 use core::{
-    any::TypeId,
+    any::{
+        Any,
+        TypeId,
+    },
     cell::{
         Ref,
         RefCell,
         RefMut,
     },
-    hash::{
-        Hash,
-        Hasher,
-    },
+    hash::BuildHasher,
 };
-use std::{
-    self,
-    any::Any,
-    hash::DefaultHasher,
-};
+
+use hashbrown::DefaultHashBuilder;
 
 use crate::{
     slot::{
@@ -108,6 +109,8 @@ pub struct StateRegistry {
 
     /// Holds all state values. Assignments are managed by the allocator.
     values: Box<[StateValue]>,
+
+    hash: DefaultHashBuilder,
 }
 
 impl StateRegistry {
@@ -121,6 +124,7 @@ impl StateRegistry {
         Self {
             allocator: RefCell::new(SlotAllocator::new(capacity)),
             values: states.into_boxed_slice(),
+            hash: DefaultHashBuilder::default(),
         }
     }
 
@@ -128,12 +132,8 @@ impl StateRegistry {
     ///
     /// The lookup key is composed of the state’s [`TypeId`] and a hash
     /// of its parameter, and is used to uniquely identify cached state entries.
-    fn compute_state_lookup_key<T: State>(params: &T::Parameter<'_>) -> StateLookupKey {
-        let mut hasher = DefaultHasher::new();
-        params.hash(&mut hasher);
-        let params_hash = hasher.finish();
-
-        (TypeId::of::<T>(), params_hash)
+    fn compute_state_lookup_key<T: State>(&self, params: &T::Parameter<'_>) -> StateLookupKey {
+        (TypeId::of::<T>(), self.hash.hash_one(params))
     }
 
     /// Drops all volatile states currently held in the registry.
@@ -187,7 +187,7 @@ impl StateRegistry {
         let value = value.into();
         let state_type = value.state_type();
 
-        let lookup_key = Self::compute_state_lookup_key::<S>(&parameter);
+        let lookup_key = self.compute_state_lookup_key::<S>(&parameter);
 
         let mut allocator = self.allocator.borrow_mut();
         let (slot_index, slot_state) = allocator.allocate_slot(lookup_key);
@@ -218,7 +218,7 @@ impl StateRegistry {
     /// - If the state is currently initializing.
     /// - If a mutable reference to the state is already held.
     pub fn get_with<S: State>(&self, parameter: S::Parameter<'_>) -> Option<Ref<'_, S>> {
-        let lookup_key = Self::compute_state_lookup_key::<S>(&parameter);
+        let lookup_key = self.compute_state_lookup_key::<S>(&parameter);
 
         let allocator = self.allocator.borrow_mut();
         let (slot_index, slot_state) = allocator.lookup_slot(&lookup_key)?;
@@ -236,7 +236,7 @@ impl StateRegistry {
     /// - If the state is currently initializing.
     /// - If any (mutable or immutable) references to the same state are held.
     pub fn get_with_mut<S: State>(&self, parameter: S::Parameter<'_>) -> Option<RefMut<'_, S>> {
-        let lookup_key = Self::compute_state_lookup_key::<S>(&parameter);
+        let lookup_key = self.compute_state_lookup_key::<S>(&parameter);
         let allocator = self.allocator.borrow_mut();
         let (slot_index, slot_state) = allocator.lookup_slot(&lookup_key)?;
         match slot_state {
@@ -251,7 +251,7 @@ impl StateRegistry {
         parameter: S::Parameter<'_>,
         slot_callback: F,
     ) -> Result<R, S::Error> {
-        let lookup_key = Self::compute_state_lookup_key::<S>(&parameter);
+        let lookup_key = self.compute_state_lookup_key::<S>(&parameter);
 
         let mut allocator = self.allocator.borrow_mut();
         let (slot_index, slot_state) = allocator.allocate_slot(lookup_key);
