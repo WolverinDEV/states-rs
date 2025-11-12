@@ -11,8 +11,6 @@ A lightweight, type-safe registry for managing cached and self-initializing stat
 `states` lets you define reusable, parameterized objects that can be lazily created,
 cached, and invalidated — ideal for dependency-aware systems or runtime caching.
 
----
-
 ## Example
 
 ```rust
@@ -45,8 +43,8 @@ fn main() {
 - Type-safe lookup by (TypeId, Parameter)
 - Persistent and volatile caching policies
 - Dependency-aware design
-- 
-# Install
+
+# Installation
 ```toml
 [dependencies]
 states = "0.1"
